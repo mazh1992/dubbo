@@ -363,6 +363,7 @@ public class ExtensionLoader<T> {
         return (T) holder.get();
     }
 
+    // 获取缓存的对象，没有就创建一个空的
     private Holder<Object> getOrCreateHolder(String name) {
         Holder<Object> holder = cachedInstances.get(name);
         if (holder == null) {

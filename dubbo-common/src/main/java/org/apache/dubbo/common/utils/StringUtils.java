@@ -890,6 +890,7 @@ public final class StringUtils {
         return buf.toString();
     }
 
+    //驼峰Name --> 大写变小写前面加 分隔符(第一位除外)
     public static String camelToSplitName(String camelName, String split) {
         if (isEmpty(camelName)) {
             return camelName;

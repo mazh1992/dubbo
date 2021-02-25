@@ -73,7 +73,7 @@ public interface MethodUtils {
                 && !"getClass".equals(name) && !"getObject".equals(name)
                 && Modifier.isPublic(method.getModifiers())
                 && method.getParameterTypes().length == 0
-                && ClassUtils.isPrimitive(method.getReturnType());
+                && ClassUtils.isPrimitive(method.getReturnType()); //Java自己的基本类型，加上 封装的基本类型
     }
 
     /**

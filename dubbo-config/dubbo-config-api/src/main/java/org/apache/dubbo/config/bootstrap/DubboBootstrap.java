@@ -888,6 +888,8 @@ public class DubboBootstrap extends GenericEventListener {
     public DubboBootstrap start() {
         if (started.compareAndSet(false, true)) {
             ready.set(false);
+
+            // 初始化
             initialize();
             if (logger.isInfoEnabled()) {
                 logger.info(NAME + " is starting...");
@@ -952,6 +954,8 @@ public class DubboBootstrap extends GenericEventListener {
                             logger.info(NAME + " awaiting ...");
                         }
                         try {
+
+                            // 线程等待（重入锁）
                             condition.await();
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
@@ -1090,6 +1094,7 @@ public class DubboBootstrap extends GenericEventListener {
                     sc.export();
                     exportedServices.add(sc);
                 });
+
                 asyncExportingFutures.add(future);
             } else {
                 sc.export();

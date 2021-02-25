@@ -140,7 +140,7 @@ public abstract class AbstractConfig implements Serializable {
                         if (parameter != null && parameter.append()) {
                             String pre = parameters.get(key);
                             if (pre != null && pre.length() > 0) {
-                                str = pre + "," + str;
+                                str = pre + "," + str; // Key相同，值用"," 分割一次按顺序排列
                             }
                         }
                         if (prefix != null && prefix.length() > 0) {
@@ -270,7 +270,7 @@ public abstract class AbstractConfig implements Serializable {
     }
 
     private static String calculatePropertyFromGetter(String name) {
-        int i = name.startsWith("get") ? 3 : 2;
+        int i = name.startsWith("get") ? 3 : 2; // 字段截取位置判断，get 是从第三位，is 是从第二位开始截取
         return StringUtils.camelToSplitName(name.substring(i, i + 1).toLowerCase() + name.substring(i + 1), ".");
     }
 
@@ -336,6 +336,7 @@ public abstract class AbstractConfig implements Serializable {
             String value = entry.getValue();
             result.put(pre + key, value);
             // For compatibility, key like "registry-type" will has a duplicate key "registry.type"
+            // key 中有 "-" 替换成 "." 这样map中两个都存在，"-" 又有 "."
             if (key.contains("-")) {
                 result.put(pre + key.replace('-', '.'), value);
             }

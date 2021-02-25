@@ -193,6 +193,7 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
         return ref.getClass();
     }
 
+
     public void checkDefault() throws IllegalStateException {
         if (provider == null) {
             provider = ApplicationModel.getConfigManager()
@@ -202,11 +203,13 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
     }
 
     public void checkProtocol() {
+        // provider 不为空，且 protocols 和 protocolIds 都为空
         if (provider != null && notHasSelfProtocolProperty()) {
             setProtocols(provider.getProtocols());
             setProtocolIds(provider.getProtocolIds());
         }
 
+        // provider 不为空，且 protocols 为空
         if (CollectionUtils.isEmpty(protocols) && provider != null) {
             setProtocols(provider.getProtocols());
         }

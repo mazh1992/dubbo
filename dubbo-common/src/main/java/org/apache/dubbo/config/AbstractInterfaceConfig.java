@@ -317,6 +317,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     }
 
     public void completeCompoundConfigs(AbstractInterfaceConfig interfaceConfig) {
+
+        // 从 ProviderConfig 对象中，读取 application、module、registries、monitor、protocols 配置对象。
         if (interfaceConfig != null) {
             if (application == null) {
                 setApplication(interfaceConfig.getApplication());
@@ -332,6 +334,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 setMonitor(interfaceConfig.getMonitor());
             }
         }
+        // 从 ModuleConfig 对象中，读取 registries、monitor 配置对象。
         if (module != null) {
             if (notHasSelfRegistryProperty()) {
                 setRegistries(module.getRegistries());
@@ -340,6 +343,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 setMonitor(module.getMonitor());
             }
         }
+
+        // 从 ApplicationConfig 对象中，读取 registries、monitor 配置对象。
         if (application != null) {
             if (notHasSelfRegistryProperty()) {
                 setRegistries(application.getRegistries());
