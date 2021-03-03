@@ -36,17 +36,27 @@ import org.apache.dubbo.event.EventDispatcher;
 import static org.apache.dubbo.common.constants.CommonConstants.DUMP_DIRECTORY;
 
 /**
- * Abort Policy.
+ * Abort Policy. 拒绝策略
+ * 打印 JStack ，分析线程状态。
  * Log warn info when abort.
  */
 public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbortPolicyWithReport.class);
 
+    /**
+     * 线程名称
+     */
     private final String threadName;
 
+    /**
+     * URL 对象
+     */
     private final URL url;
 
+    /**
+     * 最后打印时间
+     */
     private static volatile long lastPrintTime = 0;
 
     private static final long TEN_MINUTES_MILLS = 10 * 60 * 1000;
@@ -59,6 +69,9 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     private static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd_HH:mm:ss";
 
+    /**
+     * 信号量，大小为 1 。
+     */
     private static Semaphore guard = new Semaphore(1);
 
     public AbortPolicyWithReport(String threadName, URL url) {
@@ -68,6 +81,8 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+
+        // 打印告警日志
         String msg = String.format("Thread pool is EXHAUSTED!" +
                 " Thread Name: %s, Pool Size: %d (active: %d, core: %d, max: %d, largest: %d), Task: %d (completed: "
                 + "%d)," +
@@ -77,8 +92,12 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
             e.getTaskCount(), e.getCompletedTaskCount(), e.isShutdown(), e.isTerminated(), e.isTerminating(),
             url.getProtocol(), url.getIp(), url.getPort());
         logger.warn(msg);
+
+        // 打印 JStack ，分析线程状态。
         dumpJStack();
         dispatchThreadPoolExhaustedEvent(msg);
+
+        // 抛出 RejectedExecutionException 异常
         throw new RejectedExecutionException(msg);
     }
 
@@ -94,20 +113,25 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
         long now = System.currentTimeMillis();
 
         //dump every 10 minutes
+        // 每 10 分钟，打印一次。
         if (now - lastPrintTime < TEN_MINUTES_MILLS) {
             return;
         }
 
+        // 获得信号量
         if (!guard.tryAcquire()) {
             return;
         }
 
+        // 创建线程池，后台执行打印 JStack
         ExecutorService pool = Executors.newSingleThreadExecutor();
         pool.execute(() -> {
+            // 获得路径
             String dumpPath = url.getParameter(DUMP_DIRECTORY, System.getProperty("user.home"));
 
             SimpleDateFormat sdf;
 
+            // 获得系统
             String os = System.getProperty(OS_NAME_KEY).toLowerCase();
 
             // window system don't support ":" in file name
@@ -121,10 +145,12 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
             //try-with-resources
             try (FileOutputStream jStackStream = new FileOutputStream(
                 new File(dumpPath, "Dubbo_JStack.log" + "." + dateStr))) {
+                // 打印 JStack
                 JVMUtil.jstack(jStackStream);
             } catch (Throwable t) {
                 logger.error("dump jStack error", t);
             } finally {
+                // 释放信号量
                 guard.release();
             }
             lastPrintTime = System.currentTimeMillis();

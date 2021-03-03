@@ -64,6 +64,7 @@ public class UrlUtils {
      */
     private final static String URL_PARAM_STARTING_SYMBOL = "?";
 
+
     public static URL parseURL(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;
@@ -161,6 +162,15 @@ public class UrlUtils {
         return u;
     }
 
+    /**
+     * 解析单个URL 将 default 里的参数，合并到address 中
+     * 合并逻辑：
+     * 我们可以把 address 认为是URL，default 认为是defaultURL
+     * 若 URL 有不存在的属性时，从defaultURL 获得对应的属性，设置到URL中
+     * @param address
+     * @param defaults
+     * @return
+     */
     public static List<URL> parseURLs(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;

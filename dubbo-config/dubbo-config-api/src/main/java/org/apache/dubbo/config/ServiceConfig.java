@@ -323,6 +323,9 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         doExportUrls();
     }
 
+    /**
+     * 暴露 Dubbo URL
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
         ServiceRepository repository = ApplicationModel.getServiceRepository();
@@ -335,8 +338,10 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 serviceMetadata
         );
 
+        // 加载注册中心 URL 数组
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
+        // 循环 `protocols` ，向逐个注册中心分组暴露服务。
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                     .map(p -> p + "恩" +
@@ -350,6 +355,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         }
     }
 
+    // 197行 超级长的代码块，功能主要就是加载各种配置，接口方法，封装入map，拼接到注册时候的URL上
+
+    /**
+     * 基于单个协议，暴露服务
+     * @param protocolConfig 协议配置对象
+     * @param registryURLs 注册中心链接对象数组
+     */
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
         if (StringUtils.isEmpty(name)) {
@@ -401,10 +413,12 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                                 for (int i = 0; i < methods.length; i++) {
                                     String methodName = methods[i].getName();
                                     // target the method, and get its signature
-                                    if (methodName.equals(method.getName())) {  // 找到指定方法
+                                    // 找到指定方法
+                                    if (methodName.equals(method.getName())) {
                                         Class<?>[] argtypes = methods[i].getParameterTypes();
                                         // one callback in the method
-                                        if (argument.getIndex() != -1) { // 指定单个参数的位置 + 类型
+                                        // 指定单个参数的位置 + 类型
+                                        if (argument.getIndex() != -1) {
                                             if (argtypes[argument.getIndex()].getName().equals(argument.getType())) {
                                                 // 将 ArgumentConfig 对象，添加到 `map` 集合中。
                                                 AbstractConfig.appendParameters(map, argument, method.getName() + "." + argument.getIndex());

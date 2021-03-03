@@ -26,6 +26,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.THREADPOOL_KEY;
 
 /**
  * ThreadPool
+ * 线程池
  */
 @SPI("fixed")
 public interface ThreadPool {
@@ -36,7 +37,7 @@ public interface ThreadPool {
      * @param url URL contains thread parameter
      * @return thread pool
      */
-    @Adaptive({THREADPOOL_KEY})
+    @Adaptive({THREADPOOL_KEY}) // 基于 Dubbo SPI Adaptive 机制，加载对应的线程池实现，使用 URL.threadpool 属性。
     Executor getExecutor(URL url);
 
 }
