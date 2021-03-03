@@ -32,8 +32,14 @@ public class ListenerExporterWrapper<T> implements Exporter<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(ListenerExporterWrapper.class);
 
+    /**
+     * 真实的 Exporter 对象
+     */
     private final Exporter<T> exporter;
 
+    /**
+     * Exporter 监听器数组
+     */
     private final List<ExporterListener> listeners;
 
     public ListenerExporterWrapper(Exporter<T> exporter, List<ExporterListener> listeners) {

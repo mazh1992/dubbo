@@ -40,9 +40,19 @@ import static org.apache.dubbo.rpc.Constants.LOCAL_PROTOCOL;
  */
 public class InjvmProtocol extends AbstractProtocol implements Protocol {
 
+    /**
+     * 协议名
+     */
     public static final String NAME = LOCAL_PROTOCOL;
 
+    /**
+     * 默认端口
+     */
     public static final int DEFAULT_PORT = 0;
+
+    /**
+     * 单例。在 Dubbo SPI 中，被初始化，有且仅有一次。
+     */
     private static InjvmProtocol INSTANCE;
 
     public InjvmProtocol() {

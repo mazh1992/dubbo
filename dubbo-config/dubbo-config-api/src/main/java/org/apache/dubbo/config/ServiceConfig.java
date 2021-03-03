@@ -138,6 +138,13 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
     /**
      * The exported services
+     * 服务配置暴露的 Exporter
+     * URL ：Exporter 不一定是 1：1 的关系。
+     * 例如 {@link #scope} 未设置时，会暴露 Local + Remote 两个，也就是 URL ：Exporter = 1：2
+     *      {@link #scope} 设置为空时，不会暴露，也就是 URL ：Exporter = 1：0
+     *      {@link #scope} 设置为 Local 或 Remote 任一时，会暴露 Local 或 Remote 一个，也就是 URL ：Exporter = 1：1
+     *
+     * 非配置。
      */
     private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
 
@@ -356,7 +363,6 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
     // 197行 超级长的代码块，功能主要就是加载各种配置，接口方法，封装入map，拼接到注册时候的URL上
-
     /**
      * 基于单个协议，暴露服务
      * @param protocolConfig 协议配置对象
@@ -505,17 +511,24 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
         String scope = url.getParameter(SCOPE_KEY);
         // don't export when none is configured
+        // 当scop 配置不为 none 时，才开始暴露
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
 
+            // scop 不配置时: 本地和远程都暴露
+
             // export to local if the config is not remote (export to remote only when config is remote)
+            // 当scop 配置非远程时，本地暴露 injvm
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
+            // 当scop 配置非本地时，远程暴露
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
+
                         //if protocol is only injvm ,not register
+                        // 协议 只有 injvm 不进行远程暴露
                         if (LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
                             continue;
                         }
@@ -564,15 +577,22 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     /**
      * always export injvm
+     * 本地暴露服务
      */
     private void exportLocal(URL url) {
+
+        // 创建本地 Dubbo URL
         URL local = URLBuilder.from(url)
-                .setProtocol(LOCAL_PROTOCOL)
+                .setProtocol(LOCAL_PROTOCOL) // SPI 去选择injvm的实现类
                 .setHost(LOCALHOST_VALUE)
                 .setPort(0)
                 .build();
+
+        // 使用 ProxyFactory 创建 Invoker 对象
+        // 使用 Protocol 暴露 Invoker 对象
         Exporter<?> exporter = PROTOCOL.export(
                 PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, local));
+        // 添加到 `exporters`
         exporters.add(exporter);
         logger.info("Export dubbo service " + interfaceClass.getName() + " to local registry url : " + local);
     }
