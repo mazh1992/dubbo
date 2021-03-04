@@ -59,6 +59,13 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
 
     /**
      * The url for peer-to-peer invocation
+     * 端对端调用url
+     */
+    /**
+     * 直连服务地址
+     *
+     * 1. 可以是注册中心，也可以是服务提供者
+     * 2. 可配置多个，使用 ; 分隔
      */
     protected String url;
 

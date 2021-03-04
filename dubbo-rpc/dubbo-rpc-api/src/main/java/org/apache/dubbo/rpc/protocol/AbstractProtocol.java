@@ -56,10 +56,16 @@ public abstract class AbstractProtocol implements Protocol {
 
     /**
      * <host:port, ProtocolServer>
+     * 通信服务器集合
+     * key: 服务器地址。格式为：host:port
+     *
      */
     protected final Map<String, ProtocolServer> serverMap = new ConcurrentHashMap<>();
 
     //TODO SoftReference
+    /**
+     * Invoker 集合
+     */
     protected final Set<Invoker<?>> invokers = new ConcurrentHashSet<Invoker<?>>();
 
     protected static String serviceKey(URL url) {

@@ -134,9 +134,14 @@ public class RegistryProtocol implements Protocol {
     private final Map<String, ServiceConfigurationListener> serviceConfigurationListeners = new ConcurrentHashMap<>();
     private final ProviderConfigurationListener providerConfigurationListener = new ProviderConfigurationListener();
     //To solve the problem of RMI repeated exposure port conflicts, the services that have been exposed are no longer exposed.
+    // 用于解决rmi重复暴露端口冲突的问题，已经暴露过的服务不再重新暴露
     //providerurl <--> exporter
     private final ConcurrentMap<String, ExporterChangeableWrapper<?>> bounds = new ConcurrentHashMap<>();
+
+    //Protocol 自适应拓展实现类，通过 Dubbo SPI 自动注入。
     protected Protocol protocol;
+
+    //自适应拓展实现类，通过 Dubbo SPI 自动注入。
     protected RegistryFactory registryFactory;
     protected ProxyFactory proxyFactory;
 
@@ -191,8 +196,11 @@ public class RegistryProtocol implements Protocol {
 
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
+
+        // 获得注册中心 URL
         URL registryUrl = getRegistryUrl(originInvoker);
         // url to export locally
+        // 获得服务提供者 URL
         URL providerUrl = getProviderUrl(originInvoker);
 
         // Subscribe the override data
@@ -213,6 +221,8 @@ public class RegistryProtocol implements Protocol {
 
         // decide if we need to delay publish
         boolean register = providerUrl.getParameter(REGISTER_KEY, true);
+
+        // 向注册中心注册服务提供者（自己）
         if (register) {
             register(registryUrl, registeredProviderUrl);
         }
@@ -250,9 +260,20 @@ public class RegistryProtocol implements Protocol {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * 暴露服务。
+     *
+     * 此处的 Local 指的是，本地启动服务，但是不包括向注册中心注册服务的意思。
+     *
+     * @param originInvoker 原始 Invoker
+     * @param <T> 泛型
+     * @return Exporter 对象
+     */
     private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {
+        // 获得在 `bounds` 中的缓存 Key
         String key = getCacheKey(originInvoker);
 
+        // bounds 添加不存在的 exporter
         return (ExporterChangeableWrapper<T>) bounds.computeIfAbsent(key, s -> {
             Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);
             return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);
@@ -419,7 +440,7 @@ public class RegistryProtocol implements Protocol {
 
     /**
      * Get the key cached in bounds by invoker
-     *
+     * 获 取invoker 在 bounds中 缓存的key
      * @param originInvoker
      * @return
      */
@@ -451,7 +472,18 @@ public class RegistryProtocol implements Protocol {
         return doRefer(cluster, registry, type, url, qs);
     }
 
+    /**
+     * 执行服务引用，返回 Invoker 对象
+     *
+     * @param cluster Cluster 对象
+     * @param registry 注册中心对象
+     * @param type 服务接口类型
+     * @param url 注册中心 URL
+     * @param <T> 泛型
+     * @return Invoker 对象
+     */
     protected <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url, Map<String, String> parameters) {
+
         URL consumerUrl = new URL(CONSUMER_PROTOCOL, parameters.remove(REGISTER_IP_KEY), 0, type.getName(), parameters);
         ClusterInvoker<T> migrationInvoker = getMigrationInvoker(this, cluster, registry, type, url, consumerUrl);
         return interceptInvoker(migrationInvoker, url, consumerUrl);

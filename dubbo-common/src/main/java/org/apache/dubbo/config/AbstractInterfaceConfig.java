@@ -159,6 +159,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
     /**
      * The url of the reference service
+     * 服务引用 URL 数组
      */
     protected final List<URL> urls = new ArrayList<URL>();
 
