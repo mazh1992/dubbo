@@ -30,6 +30,7 @@ public interface RegistryService {
 
     /**
      * Register data, such as : provider service, consumer address, route rule, override rule and other data.
+     * 注册数据 例如 提供者，消费者，路由规则，覆盖规则 和其他数据
      * <p>
      * Registering is required to support the contract:<br>
      * 1. When the URL sets the check=false parameter. When the registration fails, the exception is not thrown and retried in the background. Otherwise, the exception will be thrown.<br>

@@ -63,14 +63,19 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final static Logger logger = LoggerFactory.getLogger(ZookeeperRegistry.class);
 
+    // 默认 Zookeeper 根节点
     private final static String DEFAULT_ROOT = "dubbo";
 
+    // Zookeeper 根节点
     private final String root;
 
+    // Service 接口全名集合
     private final Set<String> anyServices = new ConcurrentHashSet<>();
 
+    // 监听器集合
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<>();
 
+    // Zookeeper 客户端
     private final ZookeeperClient zkClient;
 
     public ZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
@@ -78,12 +83,18 @@ public class ZookeeperRegistry extends FailbackRegistry {
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
         }
+
+        // 获得 Zookeeper 根节点
         String group = url.getParameter(GROUP_KEY, DEFAULT_ROOT);
         if (!group.startsWith(PATH_SEPARATOR)) {
             group = PATH_SEPARATOR + group;
         }
         this.root = group;
+
+        // 创建 Zookeeper Client
         zkClient = zookeeperTransporter.connect(url);
+
+        // 添加 StateListener 对象。该监听器，在重连时，调用恢复方法。
         zkClient.addStateListener((state) -> {
             if (state == StateListener.RECONNECTED) {
                 logger.warn("Trying to fetch the latest urls, in case there're provider changes during connection loss.\n" +
@@ -93,6 +104,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
             } else if (state == StateListener.NEW_SESSION_CREATED) {
                 logger.warn("Trying to re-register urls and re-subscribe listeners of this instance to registry...");
                 try {
+
+                    // 进行恢复逻辑，重新发起注册和订阅。
                     ZookeeperRegistry.this.recover();
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
@@ -144,8 +157,11 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     public void doSubscribe(final URL url, final NotifyListener listener) {
         try {
+
+            // 处理所有 Service 层的发起订阅，例如监控中心的订阅
             if (ANY_VALUE.equals(url.getServiceInterface())) {
                 String root = toRootPath();
+                // 获得 url 对应的监听器集合
                 ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.computeIfAbsent(url, k -> new ConcurrentHashMap<>());
                 ChildListener zkListener = listeners.computeIfAbsent(listener, k -> (parentPath, currentChilds) -> {
                     for (String child : currentChilds) {
@@ -158,6 +174,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     }
                 });
                 zkClient.create(root, false);
+
+                // 获得 ChildListener 对象
                 List<String> services = zkClient.addChildListener(root, zkListener);
                 if (CollectionUtils.isNotEmpty(services)) {
                     for (String service : services) {
@@ -222,6 +240,13 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    /**
+     * 获得根目录
+     *
+     * Root
+     *
+     * @return 路径
+     */
     private String toRootDir() {
         if (root.equals(PATH_SEPARATOR)) {
             return root;
@@ -233,6 +258,14 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return root;
     }
 
+    /**
+     * 获得服务路径
+     *
+     * Root + Type
+     *
+     * @param url URL
+     * @return 服务路径
+     */
     private String toServicePath(URL url) {
         String name = url.getServiceInterface();
         if (ANY_VALUE.equals(name)) {
@@ -255,10 +288,28 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return paths;
     }
 
+    /**
+     * 获得分类路径
+     *
+     * Root + Service + Type
+     *
+     * @param url URL
+     * @return 分类路径
+     */
     private String toCategoryPath(URL url) {
         return toServicePath(url) + PATH_SEPARATOR + url.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY);
     }
 
+    /**
+     * 获得 URL 的路径
+     *
+     * Root + Service + Type + URL
+     *
+     * 被 {@link #doRegister(URL)} 和 {@link #doUnregister(URL)} 调用
+     *
+     * @param url URL
+     * @return 路径
+     */
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + PATH_SEPARATOR + URL.encode(url.toFullString());
     }

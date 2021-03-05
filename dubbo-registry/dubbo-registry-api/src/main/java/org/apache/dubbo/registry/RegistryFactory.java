@@ -30,8 +30,10 @@ public interface RegistryFactory {
 
     /**
      * Connect to the registry
+     * 连接注册中心.
      * <p>
      * Connecting the registry needs to support the contract: <br>
+     * 连接注册中心需的约定：
      * 1. When the check=false is set, the connection is not checked, otherwise the exception is thrown when disconnection <br>
      * 2. Support username:password authority authentication on URL.<br>
      * 3. Support the backup=10.20.153.10 candidate registry cluster address.<br>

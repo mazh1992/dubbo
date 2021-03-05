@@ -79,6 +79,7 @@ public interface Constants {
 
     /**
      * Default value for the period of retry interval in milliseconds: 5000
+     * 默认注册重试频率，5秒
      */
     int DEFAULT_REGISTRY_RETRY_PERIOD = 5 * 1000;
 
